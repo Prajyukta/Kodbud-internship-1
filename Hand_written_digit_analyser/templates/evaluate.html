@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Evaluate — MNIST{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Model Evaluation</h1>
+  <p class="subtitle">Training curves, confusion matrix, and classification report</p>
+</div>
+
+{% if error %}
+  <div class="alert alert-error">{{ error }} — <a href="/train">Train a model first →</a></div>
+{% else %}
+
+  {% if test_acc %}
+  <div class="stat-grid" style="max-width:400px;margin-bottom:2rem">
+    <div class="stat">
+      <div class="stat-val green">{{ test_acc }}%</div>
+      <div class="stat-lbl">Test Accuracy</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val blue">{{ test_loss }}</div>
+      <div class="stat-lbl">Test Loss</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if curves_img %}
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">📈 Training Curves</div>
+    <img src="data:image/png;base64,{{ curves_img }}" alt="Training Curves" style="width:100%;border-radius:8px">
+  </div>
+  {% endif %}
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">🔢 Confusion Matrix</div>
+    <img src="data:image/png;base64,{{ cm_img }}" alt="Confusion Matrix" style="width:100%;max-width:600px;border-radius:8px">
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Classification Report</div>
+    <pre class="report">{{ report }}</pre>
+  </div>
+
+{% endif %}
+{% endblock %}
