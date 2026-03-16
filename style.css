@@ -1,0 +1,66 @@
+/* Main background gradient */
+    .stApp {
+        background: linear-gradient(135deg, #d3d3d3, #1f77b4);
+        background-attachment: fixed;
+    }
+
+    
+
+    /* Text area styling */
+    textarea {
+        border-radius: 10px !important;
+        border: 1px solid #ccc !important;
+    }
+
+    /* Button styling */
+    .stButton>button {
+        background: linear-gradient(135deg, #4a90e2, #0052cc);
+        color: black;
+        border-radius: 8px;
+        height: 3em;
+        width: 100%;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+    }
+
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #0052cc, #003d99);
+        color: white;
+    }
+
+    /* Title styling */
+    h1 {
+        margin-top: 60px;
+        color: #003d66;
+        text-align: center;
+    }
+/* Prediction Card */
+.result-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    margin-top: 30px;
+}
+
+/* Result box inside card */
+.result-box {
+    background-color: black;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Positive text */
+.positive {
+    color: #00ff88;
+}
+
+/* Negative text */
+.negative {
+    color: #ff4b4b;
+}
