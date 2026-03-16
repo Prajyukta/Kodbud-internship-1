@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockSeer — AI Price Prediction</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Clash+Display:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+
+<body>
+  <div class="bg-noise"></div>
+
+  <div class="app">
+
+    <!-- ── HEADER ──────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+            <polyline points="16 7 22 7 22 13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+        <span class="brand-text">StockSeer</span>
+        <span class="brand-badge">AI Powered</span>
+      </div>
+      <nav class="header-nav">
+        <span class="nav-item active">Dashboard</span>
+        <span class="nav-item">Predict</span>
+        <span class="nav-item">About</span>
+      </nav>
+    </header>
+
+    <div class="main-layout">
+
+      <!-- ── LEFT PANEL ────────────────────────────────────── -->
+      <aside class="left-panel">
+
+        <!-- Search -->
+        <div class="panel-section">
+          <div class="section-label">Search Stock</div>
+          <div class="search-box">
+            <label for="tickerInput" style="display:none">Stock Ticker Symbol</label>
+            <input type="text" id="tickerInput" placeholder="e.g. AAPL, TSLA, MSFT" title="Enter stock ticker symbol"
+              aria-label="Stock ticker symbol" onkeydown="if(event.key==='Enter') loadStock()">
+            <button type="button" class="search-btn" onclick="loadStock()" aria-label="Search stock">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Period -->
+        <div class="panel-section">
+          <div class="section-label">Time Period</div>
+          <div class="period-btns">
+            <button type="button" class="period-btn" data-period="3mo">3M</button>
+            <button type="button" class="period-btn" data-period="6mo">6M</button>
+            <button class="period-btn active" data-period="2y">2Y</button>
+            <button type="button" class="period-btn" data-period="5y">5Y</button>
+            <button type="button" class="period-btn" data-period="max">Max</button>
+          </div>
+        </div>
+
+        <!-- Popular -->
+        <div class="panel-section">
+          <div class="section-label">Popular Stocks</div>
+          <div class="ticker-grid">
+            {% for t in tickers %}
+            <button type="button" class="ticker-chip" onclick="quickLoad('{{ t.symbol }}')">
+              <span class="ticker-sym">{{ t.symbol }}</span>
+              <span class="ticker-name">{{ t.name }}</span>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Upload CSV -->
+        <div class="panel-section">
+          <div class="section-label">Upload CSV</div>
+          <label for="csvFile" style="display:none">Upload CSV File</label>
+          <input type="file" id="csvFile" accept=".csv" title="Upload CSV file" aria-label="Upload CSV file"
+            title="Upload CSV file" aria-label="Upload stock data CSV file" style="display:block;width:100%;margin-bottom:8px;color:#7a87a8;
+                      font-size:11px;font-family:monospace;background:#181c26;
+                      border:1px solid #252c3d;border-radius:8px;padding:6px 8px;cursor:pointer;">
+          <button type="button" class="upload-btn" id="uploadBtn" aria-label="Load CSV file">
+            📂 Load CSV File
+          </button>
+          <div id="uploadStatus" style="font-size:11px;margin-top:6px;color:#0fd4b4;display:none"></div>
+          <div style="font-size:10px;color:#5a6480;margin-top:6px">
+            Required: Date, Open, High, Low, Close, Volume
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- ── CENTRE / MAIN ───────────────────────────────── -->
+      <main class="centre-panel">
+
+        <!-- Stock info bar -->
+        <div class="stock-info-bar" id="stockInfoBar" style="display:none">
+          <div class="stock-name-wrap">
+            <div class="stock-ticker-big" id="stockTickerBig">—</div>
+            <div class="stock-name-text" id="stockNameText">—</div>
+          </div>
+          <div class="stock-price-wrap">
+            <div class="stock-price" id="stockPrice">—</div>
+            <div class="stock-change" id="stockChange">—</div>
+          </div>
+          <div class="stock-stats">
+            <div class="stat-item">
+              <span class="stat-lbl">52W High</span>
+              <span class="stat-val" id="stat52H">—</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-lbl">52W Low</span>
+              <span class="stat-val" id="stat52L">—</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-lbl">Avg Volume</span>
+              <span class="stat-val" id="statVol">—</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-lbl">Data Points</span>
+              <span class="stat-val" id="statDp">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display:none">
+          <div class="loader-wrap">
+            <div class="loader-ring"></div>
+            <div class="loader-text" id="loaderText">Fetching data…</div>
+          </div>
+        </div>
+
+        <!-- Welcome -->
+        <div class="welcome-card" id="welcomeCard">
+          <div class="welcome-icon">📈</div>
+          <h2>Stock Price Prediction</h2>
+          <p>Search for a stock symbol or select one from the sidebar to get started.</p>
+          <div class="welcome-chips">
+            <button type="button" onclick="quickLoad('AAPL')" aria-label="Load AAPL stock">Apple</button>
+            <button type="button" onclick="quickLoad('TSLA')" aria-label="Load TSLA stock">Tesla</button>
+            <button type="button" onclick="quickLoad('NVDA')" aria-label="Load NVDA stock">NVIDIA</button>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-area" id="chartsArea" style="display:none">
+
+          <!-- Price chart -->
+          <div class="chart-card" id="priceChartCard">
+            <div class="chart-card-header">
+              <div class="chart-title">Price History</div>
+              <div class="chart-toggles">
+                <button type="button" class="tog active" data-tog="close"
+                  onclick="toggleLine(this,'close')">Close</button>
+                <button type="button" class="tog" data-tog="ma20" onclick="toggleLine(this,'ma20')">MA20</button>
+                <button type="button" class="tog" data-tog="ma50" onclick="toggleLine(this,'ma50')">MA50</button>
+                <button type="button" class="tog" data-tog="bb" onclick="toggleLine(this,'bb')">Bollinger</button>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+          </div>
+
+          <!-- Volume chart -->
+          <div class="chart-card half">
+            <div class="chart-card-header">
+              <div class="chart-title">Volume</div>
+            </div>
+            <div class="chart-wrap"><canvas id="volumeChart"></canvas></div>
+          </div>
+
+          <!-- RSI chart -->
+          <div class="chart-card half">
+            <div class="chart-card-header">
+              <div class="chart-title">RSI (14)</div>
+            </div>
+            <div class="chart-wrap"><canvas id="rsiChart"></canvas></div>
+          </div>
+
+        </div>
+
+      </main>
+
+      <!-- ── RIGHT PANEL ─────────────────────────────────── -->
+      <aside class="right-panel">
+
+        <div class="panel-section">
+          <div class="section-label">Prediction Model</div>
+          <div class="model-select">
+            <label class="model-option">
+              <input type="radio" name="model" value="lr" checked title="Linear Regression model"
+                aria-label="Linear Regression">
+              <div class="model-card">
+                <div class="model-icon">📊</div>
+                <div>
+                  <div class="model-name">Linear Regression</div>
+                  <div class="model-desc">Fast · Interpretable</div>
+                </div>
+              </div>
+            </label>
+            <label class="model-option">
+              <input type="radio" name="model" value="lstm" title="LSTM Neural Network model"
+                aria-label="LSTM Neural Network">
+              <div class="model-card">
+                <div class="model-icon">🧠</div>
+                <div>
+                  <div class="model-name">LSTM Neural Net</div>
+                  <div class="model-desc">Deep learning · Accurate</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-label">Forecast Days</div>
+          <div class="slider-wrap">
+            <label for="forecastSlider" style="display:none">Forecast Days</label>
+            <input type="range" id="forecastSlider" min="7" max="90" value="30" title="Forecast days"
+              aria-label="Forecast days" title="Forecast days" aria-label="Number of days to forecast"
+              oninput="document.getElementById('forecastVal').textContent=this.value">
+            <div class="slider-labels">
+              <span>7d</span>
+              <span id="forecastVal" class="slider-cur">30</span>
+              <span>90d</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="predict-btn" id="predictBtn" onclick="runPrediction()" disabled
+          aria-label="Run prediction">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Run Prediction
+        </button>
+
+        <!-- Metrics -->
+        <div class="panel-section" id="metricsSection" style="display:none">
+          <div class="section-label">Model Metrics</div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-val" id="mRmse">—</div>
+              <div class="metric-lbl">RMSE</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mMae">—</div>
+              <div class="metric-lbl">MAE</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mR2">—</div>
+              <div class="metric-lbl">R² Score</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mMape">—</div>
+              <div class="metric-lbl">MAPE %</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next day prediction -->
+        <div class="next-day-card" id="nextDayCard" style="display:none">
+          <div class="nd-label">Next Day Forecast</div>
+          <div class="nd-price" id="ndPrice">—</div>
+          <div class="nd-change" id="ndChange">—</div>
+          <div class="nd-model" id="ndModel">—</div>
+        </div>
+
+        <!-- Prediction chart -->
+        <div class="panel-section" id="predChartSection" style="display:none">
+          <div class="section-label">Prediction Chart</div>
+          <div class="chart-wrap-sm"><canvas id="predChart"></canvas></div>
+        </div>
+
+      </aside>
+
+    </div><!-- /main-layout -->
+  </div><!-- /app -->
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>
