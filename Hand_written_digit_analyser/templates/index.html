@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Predict — MNIST{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Handwritten Digit Recognizer</h1>
+  <p class="subtitle">Draw a digit (0–9) or upload an image, then hit Predict</p>
+</div>
+
+<div class="two-col">
+
+  <!-- LEFT: Draw -->
+  <div class="card">
+    <div class="card-title">✏️ Draw a Digit</div>
+    <canvas id="drawCanvas" width="280" height="280"></canvas>
+    <p class="hint">Use mouse or touch to draw</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="clearCanvas()">🗑 Clear</button>
+      <button class="btn btn-primary"   onclick="predictCanvas()">⚡ Predict</button>
+    </div>
+
+    <div class="divider">or upload an image</div>
+
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+      <label for="fileInput">📁 Choose Image File</label>
+    </div>
+  </div>
+
+  <!-- RIGHT: Result -->
+  <div class="card">
+    <div class="card-title">📊 Prediction Result</div>
+    <div class="result-box" id="resultBox">
+      <p class="placeholder">Train the model first, then draw or upload a digit</p>
+    </div>
+
+    <div class="bars-section">
+      <div class="bars-title">Confidence per Digit</div>
+      <div class="prob-bars" id="probBars">
+        {% for i in range(10) %}
+        <div class="prob-row">
+          <span class="prob-label">{{ i }}</span>
+          <div class="prob-track">
+            <div class="prob-fill" id="bar{{ i }}" style="width:0%"></div>
+          </div>
+          <span class="prob-pct" id="pct{{ i }}">0%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Model status -->
+<div class="status-bar" id="statusBar">
+  Checking model status…
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
+<script src="{{ url_for('static', filename='js/predict.js') }}"></script>
+{% endblock %}
